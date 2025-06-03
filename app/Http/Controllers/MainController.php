@@ -104,6 +104,21 @@ class MainController extends Controller
       echo '</pre>';
     }
     public function exportExercises(){
-      echo 'export';
+      if(!session()->has('exercises')){
+        return redirect()->route('home');
+      }
+
+      $exercises = session('exercises');
+      $filename = 'exercises_'.env('APP_NAME') . '_' . date('YmdHis') . '.txt';
+      $content = '';
+      foreach($exercises as $exercise){
+        $content .= $exercise['exercise_number']. ': ' . $exercise['exercise'] . "\n";
+      }
+      $content .= "\n";
+      $content .= "Soluções \n".str_repeat('-', 20) . "\n";
+      foreach($exercises as $exercise){
+        $content .= $exercise['exercise_number']. '=' . $exercise['solution'] . "\n";
+      }
+      return response($content)->header('Content-Type', 'text/plain')->header('Content-Disposition', 'attachment; filename="'.$filename.'"');
     }
 }
