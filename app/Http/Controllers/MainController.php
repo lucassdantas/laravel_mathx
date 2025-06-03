@@ -35,8 +35,49 @@ class MainController extends Controller
           'number_exercises'=> 'required|integer|min:5|max:50'
       ]);
 
+      $operations = [];
+      $operations[] = $request->check_sum? 'sum':'';
+      $operations[] = $request->check_sum? 'subtraction':'';
+      $operations[] = $request->check_sum? 'multiplication':'';
+      $operations[] = $request->check_sum? 'division':'';
 
-      dd($request->all());
+      $min = $request->number_one;
+      $max = $request->number_two;
+
+      $numberExercises = $request->number_exercises;
+
+      $exercises = [];
+      for($index = 0; $index < $numberExercises; $index++){
+        $operation = $operations[array_rand($operations)];
+        $number1 = rand($min, $max);
+        $number2 = rand($min, $max);
+
+        $exercise = '';
+        $solution = 0;
+
+        if($operation = 'sum'){
+          $exercise = "$number1 + $number2";
+          $solution =  $number1 + $number2;
+        }
+        if($operation = 'subtraction'){
+          $exercise = "$number1 - $number2";
+          $solution =  $number1 - $number2;
+        }
+        if($operation = 'multiplication'){
+          $exercise = "$number1 * $number2";
+          $solution =  $number1 * $number2;
+        }
+        if($operation = 'division'){
+          $exercise = "$number1 / $number2";
+          $solution =  $number1 / $number2;
+        }
+
+        $exercises[] = [
+          'exercise_number' => $index,
+          'exercise' => $exercise,
+          'solution' => $solution
+        ];
+      }
     }
     public function printExercises(){
       echo 'print';
