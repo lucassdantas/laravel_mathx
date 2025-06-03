@@ -11,7 +11,7 @@ class MainController extends Controller
     {
       return view('home');
     }
-    public function generateExercises(Request $request)
+    public function generateExercises(Request $request):View
     {
       $operationsInputNames = [
           'check_sum'            => 'check_sum',
@@ -26,20 +26,20 @@ class MainController extends Controller
       }
 
       $request->validate([
-          'check_sum' => 'required_without_all:' . returnInputsNamesExcept($operationsInputNames, 'check_sum'),
-          'check_subtraction' => 'required_without_all:' . returnInputsNamesExcept($operationsInputNames, 'check_subtraction'),
+          'check_sum' => 'required_without_all:' .            returnInputsNamesExcept($operationsInputNames, 'check_sum'),
+          'check_subtraction' => 'required_without_all:' .    returnInputsNamesExcept($operationsInputNames, 'check_subtraction'),
           'check_multiplication' => 'required_without_all:' . returnInputsNamesExcept($operationsInputNames, 'check_multiplication'),
-          'check_division' => 'required_without_all:' . returnInputsNamesExcept($operationsInputNames, 'check_division'),
-          'number_one'=>'required|integer|min:0|max:999',
-          'number_two'=>'required|integer|min:0|max:999',
+          'check_division' => 'required_without_all:' .       returnInputsNamesExcept($operationsInputNames, 'check_division'),
+          'number_one' => 'required|integer|min:0|max:999',
+          'number_two' => 'required|integer|min:0|max:999',
           'number_exercises'=> 'required|integer|min:5|max:50'
       ]);
 
       $operations = [];
-      $operations[] = $request->check_sum? 'sum':'';
-      $operations[] = $request->check_sum? 'subtraction':'';
-      $operations[] = $request->check_sum? 'multiplication':'';
-      $operations[] = $request->check_sum? 'division':'';
+      if($request->check_sum )            $operations[] = 'sum';
+      if($request->check_subtraction )    $operations[] = 'subtraction';
+      if($request->check_multiplication ) $operations[] = 'multiplication';
+      if($request->check_division )       $operations[] = 'division';
 
       $min = $request->number_one;
       $max = $request->number_two;
@@ -47,7 +47,7 @@ class MainController extends Controller
       $numberExercises = $request->number_exercises;
 
       $exercises = [];
-      for($index = 0; $index < $numberExercises; $index++){
+      for($index = 0; $index <= $numberExercises; $index++){
         $operation = $operations[array_rand($operations)];
         $number1 = rand($min, $max);
         $number2 = rand($min, $max);
@@ -55,22 +55,25 @@ class MainController extends Controller
         $exercise = '';
         $solution = 0;
 
-        if($operation = 'sum'){
+        if($operation === 'sum'){
           $exercise = "$number1 + $number2";
           $solution =  $number1 + $number2;
         }
-        if($operation = 'subtraction'){
+        if($operation === 'subtraction'){
           $exercise = "$number1 - $number2";
           $solution =  $number1 - $number2;
         }
-        if($operation = 'multiplication'){
+        if($operation === 'multiplication'){
           $exercise = "$number1 * $number2";
           $solution =  $number1 * $number2;
         }
-        if($operation = 'division'){
+        if($operation === 'division'){
+          if($number2 <= 0) $number2 = 1;
           $exercise = "$number1 / $number2";
           $solution =  $number1 / $number2;
         }
+
+        if(is_float($solution)) $solution = round($solution, 2);
 
         $exercises[] = [
           'exercise_number' => $index,
@@ -78,9 +81,27 @@ class MainController extends Controller
           'solution' => $solution
         ];
       }
+      session(['exercises' => $exercises]);
+      return view('operations', ['exercises' => $exercises]);
     }
     public function printExercises(){
-      echo 'print';
+      if(!session()->has('exercises')){
+        return redirect()->route('home');
+      }
+
+      $exercises = session('exercises');
+      echo '<pre>';
+      echo '<h1>Exercícios de matemática('.env('APP_NAME').')</h1>';
+      echo '<hr/>';
+      foreach($exercises as $exercise){
+        echo '<h2><small>'.str_pad($exercise['exercise_number'], 2, '0', STR_PAD_LEFT).' - </small>'.$exercise['exercise'].'</h2>';
+      }
+      echo '<hr/>';
+      echo '<h2><small>Soluções</small></h2>';
+      foreach($exercises as $exercise){
+        echo '<small>'.str_pad($exercise['exercise_number'], 2, '0', STR_PAD_LEFT).' - '.$exercise['exercise'].' = '.$exercise['solution'].'</small> <br/>';
+      }
+      echo '</pre>';
     }
     public function exportExercises(){
       echo 'export';
